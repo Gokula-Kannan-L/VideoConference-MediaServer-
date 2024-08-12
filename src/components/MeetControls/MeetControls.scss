@@ -1,0 +1,27 @@
+.controls{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    gap: 20px;
+    .video{
+        border-radius: 50%;
+        display: flex;
+        background: var(--primary-color-green);
+        padding: 5px;
+        .video-cam{
+            font-size: 35px;
+            color: black;
+        }
+    }
+    .audio{
+        border-radius: 50%;
+        display: flex;
+        background: var(--primary-color-green);
+        padding: 5px;
+        .audio-mic{
+            font-size: 35px;
+            color: black;
+        }
+    }
+}
