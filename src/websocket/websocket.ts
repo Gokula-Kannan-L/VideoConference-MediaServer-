@@ -53,7 +53,7 @@ export const InitialiseProducerTransportListener = (
 
         socket.addEventListener("message", (event: MessageEvent) => {
             let data = JSON.parse(event.data);
-            if(data.type == "produced"){
+            if(data.type == "audioProduced" || data.type == "videoProduced"){
                 console.log("Produced : ", data);
                 callback(data.response.producerId);
             }
@@ -75,12 +75,14 @@ export const InitialiseProducerTransportListener = (
         }
     });
 
-    if(device.canProduce("video")){
+    if(device.canProduce("video") && device.canProduce("audio")){
         getUserMedia({video: true, audio: true}).then( async(stream) => {
             localstream = stream;
-            const track = stream.getVideoTracks()[0];
+            const videotrack = stream.getVideoTracks()[0];
+            const audiotrack = stream.getAudioTracks()[0];
             try{
-                await producerTransport.produce({track});
+                await producerTransport.produce({track: videotrack});
+                await producerTransport.produce({track: audiotrack});
             }catch(error){
                 console.log("Can't Produce : ", error);
             }
@@ -114,7 +116,7 @@ export const InitialiseProducerTransportListenerJoinSession = (
 
         socket.addEventListener("message", (event: MessageEvent) => {
             let data = JSON.parse(event.data);
-            if(data.type == "produced"){
+            if(data.type == "audioProduced" || data.type == "videoProduced"){
                 console.log("Produced : ", data);
                 callback(data.response.producerId);
             }
@@ -135,12 +137,14 @@ export const InitialiseProducerTransportListenerJoinSession = (
         }
     });
 
-    if(device.canProduce("video")){
+    if(device.canProduce("video") && device.canProduce("audio")){
         getUserMedia({video: true, audio: true}).then( async(stream) => {
             localstream = stream;
-            const track = stream.getVideoTracks()[0];
+            const videotrack = stream.getVideoTracks()[0];
+            const audiotrack = stream.getAudioTracks()[0];
             try{
-                await producerTransport.produce({track});
+                await producerTransport.produce({track: videotrack});
+                await producerTransport.produce({track: audiotrack});
             }catch(error){
                 console.log("Can't Produce : ", error);
             }
