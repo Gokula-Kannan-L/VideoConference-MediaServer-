@@ -1,0 +1,28 @@
+.home-container{
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    .home-wrapper{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 40px;
+        padding: 160px;
+        border: 2px solid black;
+        border-radius: 20px;
+        background-color: var(--bg-color-grey);
+        .home-wrapper-child{
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            .meeting-btn{
+                width: 250px;
+                background-color: var( --primary-color-green);
+            }
+        }
+    }
+}
