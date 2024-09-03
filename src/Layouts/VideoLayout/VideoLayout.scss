@@ -1,0 +1,30 @@
+.video-layout{
+    height: 100%;
+    .local-tile{
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        margin: 20px;
+    }
+    .main-tile{
+        height: 100%;
+    }
+    .session-record{
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 20px;
+        padding: 10px;
+        border-radius: 20px;
+        color: red;
+        background-color: whitesmoke;
+        .record-icon{
+            color: red;
+            margin: 0 10px 0 0 ;
+        }
+    }
+}
