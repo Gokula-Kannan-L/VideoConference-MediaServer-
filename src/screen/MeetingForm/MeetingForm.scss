@@ -1,0 +1,46 @@
+.grid-container{
+    height: 100vh;
+    .grid-1{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 30px;
+        background-color: var( --bg-color-grey);
+        .grid-wrapper{
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            .input-label{
+                color: white;
+                font-size: 18px;
+                font-weight: 500;
+            }
+            .input-field{
+                width: 300px;
+                border-radius: 10px;
+                background-color: white;
+                .MuiInputBase-root{
+                    border-radius: 10px;
+                }
+            }
+        }
+        .start-btn{
+            width: 250px;
+            background-color: var( --primary-color-green);
+        }
+    }
+    .grid-2{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        .preview-video{
+            width: 80%;
+            height: 600px;
+            object-fit: cover;
+            transform: rotateY(180deg);
+            border-radius: 10px;
+            background-color: black;
+        }
+    }
+}
