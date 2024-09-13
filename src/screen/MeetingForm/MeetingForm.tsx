@@ -34,7 +34,7 @@ const MeetingForm:FunctionComponent<MeetingFormType> = ({formType}) => {
 
     const handleStartMeeting = async() => {
         if(userName.length > 3){
-            await fetch("http://localhost:8000/createMeeting", {
+            await fetch("https://d1x6uibfac52s2.cloudfront.net/createMeeting", {
                 method: "POST",
                 headers: { 
                     'Content-Type': 'application/json',

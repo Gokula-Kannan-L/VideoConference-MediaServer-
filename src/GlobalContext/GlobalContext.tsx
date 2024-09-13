@@ -1,6 +1,6 @@
 import React, { createContext, Dispatch, ReactElement, ReactNode, RefObject, SetStateAction, useContext, useEffect, useRef, useState } from "react";
 import {Device, types as MediasoupTypes} from "mediasoup-client";
-import { InitialiseBlankTransportListener, InitialiseConnection, InitialiseProducerTransportListener, InitialiseScreenTransportListener, onConsumerTransportCreated, onProducerTransportCreated, sendRequest } from "../websocket/websocket";
+import { InitialiseConnection, InitialiseProducerTransportListener, InitialiseScreenTransportListener, onConsumerTransportCreated, onProducerTransportCreated, sendRequest } from "../websocket/websocket";
 import { getDisplayMedia, getUserMedia } from "../helper/helper";
 import { ProfileTileData } from "../components/ProfileTile/ProfileTile";
 
@@ -356,7 +356,7 @@ export const GlobalProvider = (props: {children: ReactNode}):ReactElement => {
 
     const startScreenShare = async() => {
         const transport = screenTransport.current;
-        await getDisplayMedia({video: true, audio: false}).then( async(displayStream) => {
+        await getDisplayMedia({video: {height:{ ideal: 720 }}, audio: false}).then( async(displayStream) => {
             if(displayStream && meetStateRef.current){
                 setDialogOpen(false);
                 displayStreamRef.current = displayStream;
@@ -454,9 +454,10 @@ export const GlobalProvider = (props: {children: ReactNode}):ReactElement => {
                         if(response.meetId){
                             setIsRecording(true);
                             setToasterMsg("Recording Started");
+                            setToaster(true);
                             setTimeout( () => {
-                                setToaster(true);
-                            }, 1000);
+                                setToaster(false);
+                            }, 2000);
                         }
                     break;
 
@@ -464,9 +465,10 @@ export const GlobalProvider = (props: {children: ReactNode}):ReactElement => {
                         if(response.meetId){
                             setIsRecording(false);
                             setToasterMsg("Recording Stopped");
+                            setToaster(true);
                             setTimeout( () => {
-                                setToaster(true);
-                            }, 1000);
+                                setToaster(false);
+                            }, 2000);
                         }
                     break;
 
@@ -778,12 +780,6 @@ export const GlobalProvider = (props: {children: ReactNode}):ReactElement => {
                         const screenProducer = await onProducerTransportCreated(response.params, device);
                         screenTransport.current = screenProducer;
                         InitialiseScreenTransportListener(screenProducer, socket, meetState.meetId, meetState.currentUser);
-                    break;
-
-                    case "blankTransportCreated":
-                        const blankProducer = await onProducerTransportCreated(response.params, device);
-                        blankTransport.current = blankProducer;
-                        InitialiseBlankTransportListener(blankProducer, socket, meetState.meetId, meetState.currentUser);
                     break;
 
                     case "producerTransportCreated": 

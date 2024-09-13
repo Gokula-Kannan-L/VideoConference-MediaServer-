@@ -2,8 +2,8 @@ import * as mediasoup from 'mediasoup-client';
 import { getDisplayMedia, getUserMedia } from '../helper/helper';
 
 export const InitialiseConnection = (meetId: string) => {
-    const newSocket =  new WebSocket(`ws://localhost:8000/meet`);
-    // const newSocket =  new WebSocket(`https://d27ek27ht07wc6.cloudfront.net/meet`);
+    // const newSocket =  new WebSocket(`ws://localhost:8000/meet`);
+    const newSocket =  new WebSocket(`https://d1x6uibfac52s2.cloudfront.net/meet`);
     // const newSocket =  new WebSocket("https://7694-14-97-122-202.ngrok-free.app/ws");
     return newSocket;
 }
@@ -22,31 +22,6 @@ export const onProducerTransportCreated = async(params: any, device: mediasoup.t
         iceCandidates: params.iceCandidates,
         iceParameters: params.iceParameters,
         sctpParameters: params.sctpParameters,
-        iceServers: [{
-            urls: 'turn:numb.viagenie.ca',
-            credential: 'muazkh',
-            username: 'webrtc@live.com'
-        },
-        {
-            urls: 'turn:192.158.29.39:3478?transport=udp',
-            credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
-            username: '28224511:1379330808'
-        },
-        {
-            urls: 'turn:192.158.29.39:3478?transport=tcp',
-            credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
-            username: '28224511:1379330808'
-        },
-        {
-            urls: 'turn:turn.bistri.com:80',
-            credential: 'homeo',
-            username: 'homeo'
-         },
-         {
-            urls: 'turn:turn.anyfirewall.com:443?transport=tcp',
-            credential: 'webrtc',
-            username: 'webrtc'
-        }]
     }
 
     return device.createSendTransport(transportData);
@@ -81,47 +56,6 @@ export const InitialiseScreenTransportListener = async(
 
 }
 
-export const InitialiseBlankTransportListener = async(
-    blankTransport: mediasoup.types.Transport, 
-    socket: WebSocket,
-    meetId: string,
-    user: {userKey?: string, userName: string}
-) => {
-    blankTransport.on("connect", async({dtlsParameters}, callback, err) => {
-        sendRequest(socket, "connectBlankTransport", {dtlsParameters, meetId, userKey: user.userKey});
-        socket.addEventListener( "message" , (event: MessageEvent) => {
-            let response = JSON.parse(event.data);
-            if(response.type == "blankConnected"){
-              callback();
-            }
-        });
-    });
-
-    blankTransport.on("produce", async({kind, rtpParameters}, callback, err) => {
-        sendRequest(socket, "blankProduce", {transportId: blankTransport.id,  kind, rtpParameters, meetId, user});
-
-        socket.addEventListener("message", (event: MessageEvent) => {
-            let data = JSON.parse(event.data);
-            if(data.type == "blankVideoProduced"){
-                callback(data.response.producerId);
-            }
-        })
-    });
-
-    const blankVideoStream = new MediaStream();
-    const canvas = document.createElement('canvas');
-    canvas.width = 1024; 
-    canvas.height = 720;
-    const videoTrack = canvas.captureStream().getVideoTracks()[0];
-    console.log("videoTrack: ", videoTrack);
-
-    blankVideoStream.addTrack(videoTrack);
-    console.log("blankStream :", blankVideoStream.getVideoTracks())
-    await blankTransport.produce({track: blankVideoStream.getVideoTracks()[0], encodings: [{
-        scalabilityMode: "L1T3"
-    }]});
-
-}
 
 export const InitialiseProducerTransportListener = async(
     producerTransport: mediasoup.types.Transport, 
@@ -152,7 +86,7 @@ export const InitialiseProducerTransportListener = async(
     });
 
     if(device.canProduce("video") && device.canProduce("audio")){
-        return await getUserMedia({video: true, audio: true}).then( async(stream) => {
+        return await getUserMedia({video:{height:{ ideal: 720 }}, audio: true}).then( async(stream) => {
             const videotrack = stream.getVideoTracks()[0];
             const audiotrack = stream.getAudioTracks()[0];
             try{
