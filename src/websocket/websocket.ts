@@ -4,7 +4,6 @@ import { getDisplayMedia, getUserMedia } from '../helper/helper';
 export const InitialiseConnection = (meetId: string) => {
     // const newSocket =  new WebSocket(`ws://localhost:8000/meet`);
     const newSocket =  new WebSocket(`https://d1x6uibfac52s2.cloudfront.net/meet`);
-    // const newSocket =  new WebSocket("https://7694-14-97-122-202.ngrok-free.app/ws");
     return newSocket;
 }
 
@@ -86,15 +85,55 @@ export const InitialiseProducerTransportListener = async(
     });
 
     if(device.canProduce("video") && device.canProduce("audio")){
-        return await getUserMedia({video:{height:{ ideal: 720 }}, audio: true}).then( async(stream) => {
+        return await getUserMedia({video:{width:{ ideal: 1080}, height:{ ideal: 720}}, audio: true}).then( async(stream) => {
             const videotrack = stream.getVideoTracks()[0];
             const audiotrack = stream.getAudioTracks()[0];
             try{
-                await producerTransport.produce({track: videotrack, encodings: [{
-                    scalabilityMode: "L1T3"
-                }]});
+                await producerTransport.produce({track: videotrack});
                 await producerTransport.produce({track: audiotrack});
 
+                return stream;
+            }catch(error){
+                console.log("Can't Produce : ", error);
+            }
+        });
+    }
+
+}
+
+export const InitialiseUpdateProducerTransportListener = async(
+    producerTransport: mediasoup.types.Transport, 
+    socket: WebSocket,
+    device: mediasoup.types.Device, 
+    meetId: string,
+    user: {userKey?: string, userName: string, userId: string, avatarKey: string}) => {
+    
+    producerTransport.on("connect", async({dtlsParameters}, callback, err) => {
+        sendRequest(socket, "connectUpdateProducerTransport", {dtlsParameters, meetId, userKey: user.userKey});
+        socket.addEventListener( "message" , (event: MessageEvent) => {
+            let response = JSON.parse(event.data);
+            if(response.type == "updateProducerConnected"){
+              callback();
+            }
+        });
+    });
+
+    producerTransport.on("produce", async({kind, rtpParameters}, callback, err) => {
+        sendRequest(socket, "updateProduce", {transportId: producerTransport.id,  kind, rtpParameters, meetId, user});
+
+        socket.addEventListener("message", (event: MessageEvent) => {
+            let data = JSON.parse(event.data);
+            if(data.type == "audioProduced" || data.type == "videoProduced"){
+                callback(data.response.producerId);
+            }
+        })
+    });
+
+    if(device.canProduce("video")){
+        return await getUserMedia({video:{width:{ ideal: 1080}, height:{ ideal: 720}}, audio: true}).then( async(stream) => {
+            const videotrack = stream.getVideoTracks()[0];
+            try{
+                await producerTransport.produce({track: videotrack});
                 return stream;
             }catch(error){
                 console.log("Can't Produce : ", error);

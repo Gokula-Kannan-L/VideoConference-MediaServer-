@@ -13,10 +13,10 @@ type VideoTileProps = {
     userId: string,
     avatarColorCode: string,
     videoEnabled: boolean,
-    videoStream: MediaStream,
+    videoStream: MediaStream | null,
     audioEnabled: boolean,
     screenShareEnabled: boolean,
-    audioStream: MediaStream,
+    audioStream: MediaStream | null,
     isPinned: boolean
 }
 
@@ -55,6 +55,7 @@ const VideoTile:FunctionComponent<VideoTileProps> = ({
         if(videoStream && videoRef.current){
             videoRef.current.srcObject = videoStream;
         }
+        console.log(videoRef.current)
     }, [audioEnabled, videoEnabled, audioStream, videoStream]);
     
     return(

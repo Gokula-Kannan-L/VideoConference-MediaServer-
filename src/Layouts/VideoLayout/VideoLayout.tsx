@@ -17,7 +17,7 @@ const VideoLayout:FunctionComponent = () => {
     return(
         <div className="video-layout">
             <div className="local-tile">
-                {meetStateRef.current && localStream &&
+                {meetStateRef.current &&
                     <VideoTile
                         key={meetStateRef.current.currentUser.userKey}
                         tileType={TileType.local}
@@ -37,9 +37,9 @@ const VideoLayout:FunctionComponent = () => {
                 }
             </div>
             <div className="main-tile">
-               {tileData ? 
-                <MainTile presenter={tileData}/> :
-                profileData && <ProfileTile userData={profileData}/>
+               {tileData &&
+                <MainTile presenter={tileData}/> 
+                // profileData && <ProfileTile userData={profileData}/>
             }
             </div>
             {isRecording && <div className="session-record">

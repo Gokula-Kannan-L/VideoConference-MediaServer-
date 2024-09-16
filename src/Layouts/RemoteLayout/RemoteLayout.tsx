@@ -9,45 +9,6 @@ const RemoteLayout:FunctionComponent = () => {
     return(
         <div className="remote-container">
             {
-                presenter ? 
-                (localStream && meetStateRef.current && 
-                <VideoTile
-                        key={meetStateRef.current.currentUser.userKey + "profile"}
-                        tileType={TileType.local}
-                        width="100%"
-                        height="200px"
-                        userName={meetStateRef.current.currentUser.userId == meetStateRef.current.host.hostId ? `${meetStateRef.current.currentUser.userName} (Host)` : meetStateRef.current.currentUser.userName}
-                        userKey={meetStateRef.current.currentUser.userKey}
-                        userId={meetStateRef.current.currentUser.userId}
-                        avatarColorCode={""}
-                        videoEnabled={meetStateRef.current.currentUser.preference.video}
-                        audioEnabled={meetStateRef.current.currentUser.preference.audio}
-                        screenShareEnabled={false}
-                        videoStream={localStream}
-                        audioStream={localStream}
-                        isPinned={meetStateRef.current.currentUser.isPinned.screen}
-                />) :
-
-                (profileData && meetStateRef.current && localStream && profileData.userId != meetStateRef.current.currentUser.userId && 
-                    <VideoTile
-                            key={meetStateRef.current.currentUser.userKey}
-                            tileType={TileType.local}
-                            width="100%"
-                            height="200px"
-                            userName={meetStateRef.current.currentUser.userId == meetStateRef.current.host.hostId ? `${meetStateRef.current.currentUser.userName} (Host)` : meetStateRef.current.currentUser.userName}
-                            userKey={meetStateRef.current.currentUser.userKey}
-                            userId={meetStateRef.current.currentUser.userId}
-                            avatarColorCode={""}
-                            videoEnabled={meetStateRef.current.currentUser.preference.video}
-                            audioEnabled={meetStateRef.current.currentUser.preference.audio}
-                            screenShareEnabled={false}
-                            videoStream={localStream}
-                            audioStream={localStream}
-                            isPinned={meetStateRef.current.currentUser.isPinned.screen}
-                    />)
-
-            }
-            {
                 isScreenSharing && meetStateRef.current && displayStreamRef.current &&
                 <VideoTile
                         key={meetStateRef.current.currentUser.userKey}

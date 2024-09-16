@@ -34,7 +34,7 @@ const MeetingForm:FunctionComponent<MeetingFormType> = ({formType}) => {
 
     const handleStartMeeting = async() => {
         if(userName.length > 3){
-            await fetch("https://d1x6uibfac52s2.cloudfront.net/createMeeting", {
+            await fetch("https://d3lzadt10yn8c1.cloudfront.net/createMeeting", {
                 method: "POST",
                 headers: { 
                     'Content-Type': 'application/json',
@@ -71,7 +71,13 @@ const MeetingForm:FunctionComponent<MeetingFormType> = ({formType}) => {
                         },
                         createdAt
                     }, FormType.CREATE);
-                    navigate(`/meeting?meetId=${meetId}`);
+                    if(previewStream && previewRef.current){
+                        previewStream.getVideoTracks()[0].stop();
+                        previewStream.getVideoTracks()[0].enabled = false;
+                        previewRef.current = null;
+                        navigate(`/meeting?meetId=${meetId}`);
+                    }
+                    
                 }
             }).catch( (error) => {
                 console.log("Creating Meeting Error :", error);
@@ -82,7 +88,7 @@ const MeetingForm:FunctionComponent<MeetingFormType> = ({formType}) => {
 
     const handleJoinMeeting = async() => {
         if(userName.length > 3 && joinMeetId){
-            await fetch("http://localhost:8000/joinMeeting", {
+            await fetch("https://d3lzadt10yn8c1.cloudfront.net/joinMeeting", {
                 method: "POST",
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -117,8 +123,13 @@ const MeetingForm:FunctionComponent<MeetingFormType> = ({formType}) => {
                         },
                         createdAt
                     }, FormType.JOIN);
-                    previewStream?.getVideoTracks()[0].stop();
-                    navigate(`/meeting?meetId=${meetId}`);
+
+                    if(previewStream && previewRef.current){
+                        previewStream.getVideoTracks()[0].stop();
+                        previewStream.getVideoTracks()[0].enabled = false;
+                        previewRef.current = null;
+                        navigate(`/meeting?meetId=${meetId}`);
+                    }
                 }
             })
         }

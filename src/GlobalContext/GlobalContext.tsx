@@ -1,6 +1,6 @@
 import React, { createContext, Dispatch, ReactElement, ReactNode, RefObject, SetStateAction, useContext, useEffect, useRef, useState } from "react";
 import {Device, types as MediasoupTypes} from "mediasoup-client";
-import { InitialiseConnection, InitialiseProducerTransportListener, InitialiseScreenTransportListener, onConsumerTransportCreated, onProducerTransportCreated, sendRequest } from "../websocket/websocket";
+import { InitialiseConnection, InitialiseProducerTransportListener, InitialiseScreenTransportListener, InitialiseUpdateProducerTransportListener, onConsumerTransportCreated, onProducerTransportCreated, sendRequest } from "../websocket/websocket";
 import { getDisplayMedia, getUserMedia } from "../helper/helper";
 import { ProfileTileData } from "../components/ProfileTile/ProfileTile";
 
@@ -10,7 +10,7 @@ type GlobalContextType = {
     meetStateRef: RefObject<MeetStateType | undefined>
     isHost: boolean 
     profileData: ProfileTileData | null
-    localStream: MediaStream | undefined  
+    localStream: MediaStream | null  
     participants: ParticipantType | undefined
     audio: boolean
     toggleAudio: (audio: boolean) => void
@@ -95,7 +95,7 @@ export type ParticipantType = {
 export type MainTileType = {
     userName: String, 
     userId: String, 
-    videoStream: MediaStream,
+    videoStream: MediaStream | null,
     title: string,
     pinType:{
         screen: boolean,
@@ -122,7 +122,7 @@ type PinVideoType = {
     userKey: string,
     userId: string,
     userName: string, 
-    videoStream: MediaStream, 
+    videoStream: MediaStream | null, 
     isCurrentUser: boolean, 
     type: string,
 }
@@ -163,9 +163,8 @@ export const GlobalProvider = (props: {children: ReactNode}):ReactElement => {
     const consumerTransport = useRef<MediasoupTypes.Transport | null>(null);
     const producerTransport = useRef<MediasoupTypes.Transport | null>(null);
     const screenTransport = useRef<MediasoupTypes.Transport | null>(null);
-    const blankTransport = useRef<MediasoupTypes.Transport | null>(null);
 
-    const [localStream, setLocalStream] = useState<MediaStream>();
+    const [localStream, setLocalStream] = useState<MediaStream | null>(null);
 
     const [isScreenSharing, setIsScreenSharing] = useState<boolean>(false);
     const displayStreamRef = useRef<MediaStream | null>(null);
@@ -260,6 +259,21 @@ export const GlobalProvider = (props: {children: ReactNode}):ReactElement => {
     const toggleVideo = async(video: boolean) => {
         if(socketRef.current && meetStateRef.current){
             sendRequest(socketRef.current, "toggleVideo", {meetId: meetStateRef.current.meetId, userKey: meetStateRef.current.currentUser.userKey, video});
+        }
+        if(video && producerTransport.current && socketRef.current && meetStateRef.current){
+            const device = new Device();
+            sendRequest(socketRef.current, "updateProducerTransport", {
+                forceTcp: false, 
+                rtpCapabilities: device,
+                meetId: meetStateRef.current.meetId, 
+                userKey: meetStateRef.current.currentUser.userKey
+            });
+        }else{
+            if(localStream){
+                localStream.getVideoTracks()[0].stop();
+                localStream.getVideoTracks()[0].enabled = false;
+                setLocalStream(null);
+            }
         }
     }
 
@@ -441,7 +455,7 @@ export const GlobalProvider = (props: {children: ReactNode}):ReactElement => {
                 const response = message.response;
                 switch(type){
                     case "failed":
-                        if(response.message){
+                        if(response.message?.length > 0){
                             setToasterMsg(response.message);
                             setToaster(true);
                             setTimeout( () => {
@@ -482,11 +496,9 @@ export const GlobalProvider = (props: {children: ReactNode}):ReactElement => {
                                         meetId: meetState.meetId, 
                                         userKey: meetState?.currentUser.userKey
                                     });
-                                    sendRequest(socket, "createRecordTransport", {
-                                        forceTcp: false, 
-                                        rtpCapabilities: device,
+                                    sendRequest(socket, "createConsumerTransport", {
                                         meetId: meetState.meetId, 
-                                        userKey: meetState?.currentUser.userKey
+                                        userKey: meetState.currentUser.userKey
                                     });
                                     sendRequest(socket, "createScreenTransport", {
                                         forceTcp: false, 
@@ -570,6 +582,23 @@ export const GlobalProvider = (props: {children: ReactNode}):ReactElement => {
                             meetState.currentUser.preference = {...meetState.currentUser.preference, video: response.video}
                             meetStateRef.current.currentUser.preference = {...meetState.currentUser.preference, video: response.video}
                             setVideo(response.video);
+                        }
+                    break;
+
+                    case "updatedProducerVideoId":
+                        if(response.user.userId != meetStateRef.current?.currentUser.userId && participantsRef.current && participantsRef.current[response.user.userKey]){
+                            const participants = { ...participantsRef.current };
+                            participants[response.user.userKey].producer.videoId = response.user.videoId;
+                            sendRequest(socket, "startConsume", {
+                                kind: "video",
+                                rtpCapabilities: device.rtpCapabilities, 
+                                producerId: response.user.videoId, 
+                                producerUserKey: response.user.userKey, 
+                                meetId: meetState.meetId, 
+                                userKey: meetState.currentUser.userKey
+                            });
+                            participantsRef.current = participants;
+                            setParticipants({...participants});
                         }
                     break;
 
@@ -785,45 +814,37 @@ export const GlobalProvider = (props: {children: ReactNode}):ReactElement => {
                     case "producerTransportCreated": 
                         const producer = await onProducerTransportCreated(response.params, device);
                         producerTransport.current = producer;
-                        if(meetType == FormType.CREATE){
-                            const stream = await InitialiseProducerTransportListener(producer, socket, device, meetState.meetId, meetState.currentUser);
-                            producerTransport.current.on("connectionstatechange", (state) => {
-                                console.log("connectionstatechange : ", state)
-                                switch(state){
-                                  case "connecting": console.log("Connecting-------------------", state);
-                                    break;
-                                  case "new": console.log("New-------------------", state);
-                                    break;
-                                  case "connected":
-                                    sendRequest(socket, "createConsumerTransport", {meetId: meetState.meetId, userKey: meetState.currentUser.userKey});
-                                    if(stream)
-                                        setLocalStream(stream);
-                                    break;
-                        
-                                  case "failed": producerTransport.current?.close();
-                                    break;
-                                }
-                            });
+                        const stream = await InitialiseProducerTransportListener(producer, socket, device, meetState.meetId, meetState.currentUser);
+                        producerTransport.current.on("connectionstatechange", (state) => {
+                            console.log("connectionstatechange : ", state)
+                            switch(state){
+                                case "connected":
+                                if(stream)
+                                    setLocalStream(stream);
+                                break;
+                    
+                                case "failed": producerTransport.current?.close();
+                                break;
+                            }
+                        });
+                    break;
 
-                        }else{
-                            sendRequest(socket, "createConsumerTransport", {meetId: meetState.meetId, userKey: meetState.currentUser.userKey});
-                            const stream = await InitialiseProducerTransportListener(producer, socket, device, meetState.meetId, meetState.currentUser);
-                            producerTransport.current.on("connectionstatechange", (state) => {
-                                console.log("connectionstatechange : ", state)
-                                switch(state){
-                                  case "connecting": console.log("Connecting-------------------", state);
-                                    break;
-                                  case "new": console.log("New-------------------", state);
-                                    break;
-                                  case "connected":
-                                     if(stream)
-                                        setLocalStream(stream);
-                                    break;
-                                  case "failed": producerTransport.current?.close();
-                                    break;
-                                }
-                            });
-                        }
+                    case "producerTransportUpdated":
+                        const updateProducer = await onProducerTransportCreated(response.params, device);
+                        producerTransport.current = updateProducer;
+                        const updateStream = await InitialiseUpdateProducerTransportListener(updateProducer, socket, device, meetState.meetId, meetState.currentUser);
+                        producerTransport.current.on("connectionstatechange", (state) => {
+                            console.log("connectionstatechange : ", state)
+                            switch(state){
+                                case "connected":
+                                    if(updateStream)
+                                        setLocalStream(updateStream);
+                                break;
+                                case "failed": 
+                                    producerTransport.current?.close();
+                                break;
+                            }
+                        });
                     break;
  
                     case "consumerTransportCreated":
