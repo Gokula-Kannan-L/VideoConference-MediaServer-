@@ -143,50 +143,6 @@ export const InitialiseUpdateProducerTransportListener = async(
 
 }
 
-export const InitialiseProducerTransportListenerJoinSession = async(
-    producerTransport: mediasoup.types.Transport, 
-    socket: WebSocket, 
-    device: mediasoup.types.Device, 
-    meetId: string,
-    user: {userKey?: string, userName: string}) => {
-
-    producerTransport.on("connect", async({dtlsParameters}, callback, err) => {
-        sendRequest(socket, "connectProducerTransport", {dtlsParameters, meetId, userKey: user.userKey});
-        socket.addEventListener( "message" , (event: MessageEvent) => {
-            let response = JSON.parse(event.data);
-            if(response.type == "producerConnected"){
-              callback();
-            }
-        });
-    });
-
-    producerTransport.on("produce", async({kind, rtpParameters}, callback, err) => {
-        sendRequest(socket, "produce", {transportId: producerTransport.id,  kind, rtpParameters, meetId, user});
-
-        socket.addEventListener("message", (event: MessageEvent) => {
-            let data = JSON.parse(event.data);
-            if(data.type == "audioProduced" || data.type == "videoProduced"){
-                callback(data.response.producerId);
-            }
-        })
-    });
-
-
-    if(device.canProduce("video") && device.canProduce("audio")){
-     return await getUserMedia({video: true, audio: true}).then( async(stream) => {
-            const videotrack = stream.getVideoTracks()[0];
-            const audiotrack = stream.getAudioTracks()[0];
-            try{
-                await producerTransport.produce({track: videotrack});
-                await producerTransport.produce({track: audiotrack});
-                return stream;
-            }catch(error){
-                console.log("Can't Produce : ", error);
-            }
-        });
-    }
-}
-
 export const onConsumerTransportCreated = async(params: any, device: mediasoup.types.Device) => {
     let transportData: mediasoup.types.TransportOptions = {
         id: params.id,
