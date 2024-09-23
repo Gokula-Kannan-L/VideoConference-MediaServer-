@@ -1,10 +1,14 @@
 import * as mediasoup from 'mediasoup-client';
 import { getDisplayMedia, getUserMedia } from '../helper/helper';
 
-export const InitialiseConnection = (meetId: string) => {
-    // const newSocket =  new WebSocket(`ws://localhost:8000/meet`);
-    const newSocket =  new WebSocket(`https://d1x6uibfac52s2.cloudfront.net/meet`);
-    return newSocket;
+export const InitialiseConnection = () => {
+    const url = process.env.REACT_APP_SOCKET_URL;
+    if(url){
+        const newSocket =  new WebSocket(url);
+        return {newSocket};
+    }else{
+        return {error: "Socket Connection Failed: WebSocket not found."}
+    }
 }
 
 export const sendRequest = (socket: WebSocket, type: string, data?: {}) => {
@@ -54,7 +58,6 @@ export const InitialiseScreenTransportListener = async(
     });
 
 }
-
 
 export const InitialiseProducerTransportListener = async(
     producerTransport: mediasoup.types.Transport, 
@@ -140,7 +143,6 @@ export const InitialiseUpdateProducerTransportListener = async(
             }
         });
     }
-
 }
 
 export const onConsumerTransportCreated = async(params: any, device: mediasoup.types.Device) => {
@@ -153,7 +155,6 @@ export const onConsumerTransportCreated = async(params: any, device: mediasoup.t
     }
 
     return device.createRecvTransport(transportData); 
-
 }
 
 export const InitialiseConsumerTransportListener = (consumerTransport: mediasoup.types.Transport, device: mediasoup.Device ,socket: WebSocket, meetId: string, userKey: string) => {

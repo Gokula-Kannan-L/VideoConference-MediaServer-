@@ -33,8 +33,9 @@ const MeetingForm:FunctionComponent<MeetingFormType> = ({formType}) => {
     }, []);
 
     const handleStartMeeting = async() => {
-        if(userName.length > 3){
-            await fetch("https://d3lzadt10yn8c1.cloudfront.net/createMeeting", {
+        const url = process.env.REACT_APP_BASE_URL;
+        if(url && userName.length > 3){
+            await fetch(`${url}/createMeeting`, {
                 method: "POST",
                 headers: { 
                     'Content-Type': 'application/json',
@@ -87,8 +88,9 @@ const MeetingForm:FunctionComponent<MeetingFormType> = ({formType}) => {
     }
 
     const handleJoinMeeting = async() => {
-        if(userName.length > 3 && joinMeetId){
-            await fetch("https://d3lzadt10yn8c1.cloudfront.net/joinMeeting", {
+        const url = process.env.REACT_APP_BASE_URL;
+        if(url && userName.length > 3 && joinMeetId){
+            await fetch(`${url}/joinMeeting`, {
                 method: "POST",
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

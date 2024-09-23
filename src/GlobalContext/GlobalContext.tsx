@@ -228,14 +228,23 @@ export const GlobalProvider = (props: {children: ReactNode}):ReactElement => {
         }
     }
 
-    const InitialiseMeeting = (data: MeetStateType, meetType: FormType) => {
+    const InitialiseMeeting = async(data: MeetStateType, meetType: FormType) => {
         meetStateRef.current = data;
         if(data.currentUser.userId === data.host.hostId){
             setHost(true);
         }
+        const {newSocket, error} = await InitialiseConnection();
+        if(newSocket){
+            socketRef.current = newSocket;
+            InitSocket(meetType);
+        }else{
+            setToasterMsg(error);
+            setToaster(true);
+            setTimeout(()=>{
+                setToaster(false);
+            }, 2000);
+        }
         
-        socketRef.current = InitialiseConnection(data.meetId);
-        InitSocket(meetType);
     }
 
     const toggleAudio = (audio: boolean) => {
@@ -442,8 +451,7 @@ export const GlobalProvider = (props: {children: ReactNode}):ReactElement => {
             socket.onopen = () => {
                 console.log("WebSocket Connected!");
                 sendRequest(socket, "getRtpCapabilities", {meetId: meetState.meetId});
-                if(meetType == FormType.CREATE)
-                    sendRequest(socket, "initialiseAudioListeners", {meetId: meetState.meetId});
+                sendRequest(socket, "initialiseAudioListeners", {meetId: meetState.meetId});
             }
 
             const device = new Device();
@@ -556,6 +564,10 @@ export const GlobalProvider = (props: {children: ReactNode}):ReactElement => {
                             delete participantsRef.current?.[response.user.userKey];
                             setParticipants(participantsRef.current);
                         }
+                    break;
+
+                    case "currentActiveSpeaker":
+                        console.log("Current Active User ===============", response);
                     break;
 
                     case "endMeeting":
