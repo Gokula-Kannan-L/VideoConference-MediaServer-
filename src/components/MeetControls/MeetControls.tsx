@@ -12,12 +12,14 @@ import { useGlobalState } from "../../GlobalContext/GlobalContext";
 import { Dialog, List, ListItemButton } from "@mui/material";
 
 const MeetControls = () => {
-    const {audio, video, isScreenSharing, toggleAudio, toggleVideo, handleScreenShare, stopScreenShare, leaveMeeting, isHost, muteAllUsers, endMeeting} = useGlobalState();
+    const {audio, video, isScreenSharing, toggleAudio, toggleVideo, handleScreenShare, stopScreenShare, leaveMeeting, isHost, muteAllUsers, isRecording, startRecording, stopRecording ,endMeeting} = useGlobalState();
     const [toggleSettings, setToggleSettings] = useState<boolean>(false);
     const Settings = () => {
         return(
             <List className="settings-main">
                 <ListItemButton className="settings-items" onClick={ () => {muteAllUsers(); setToggleSettings(false)}}><MicOffIcon/>Mute All</ListItemButton>
+                {isHost && <ListItemButton className="settings-items" onClick={ () => startRecording()} disabled={isRecording}><MicOffIcon/>Start Recording</ListItemButton>}
+                {isHost && <ListItemButton className="settings-items" onClick={ () => stopRecording()} disabled={!isRecording}><MicOffIcon/>Stop Recording</ListItemButton>}
                 <ListItemButton className="settings-items" onClick={ () => {endMeeting(); setToggleSettings(false)}}><MicOffIcon/>End Meeting</ListItemButton>
             </List>
         )

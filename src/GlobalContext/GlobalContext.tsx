@@ -32,6 +32,8 @@ type GlobalContextType = {
     pinVideoToMainTile: (data: PinVideoType) => void
     chatMessages: MessageType | undefined
     sendMessage: (message: string) => void
+    startRecording: () => void
+    stopRecording: () => void
     leaveMeeting: () => void
     endMeeting: () => void
 }
@@ -420,6 +422,26 @@ export const GlobalProvider = (props: {children: ReactNode}):ReactElement => {
         }    
     }
 
+    const startRecording = () => {
+        if(socketRef.current)
+            sendRequest(socketRef.current, "startRecording", {
+                meetId: meetStateRef.current?.meetId, 
+                userKey: meetStateRef.current?.currentUser.userKey, 
+                userId: meetStateRef.current?.currentUser.userId,
+                userName: meetStateRef.current?.currentUser.userName
+            });
+    }
+
+    const stopRecording = () => {
+        if(socketRef.current)
+            sendRequest(socketRef.current, "stopRecording", {
+                meetId: meetStateRef.current?.meetId, 
+                userKey: meetStateRef.current?.currentUser.userKey, 
+                userId: meetStateRef.current?.currentUser.userId,
+                userName: meetStateRef.current?.currentUser.userName
+            });
+    }
+
     const sendMessage = (message: string) => {
         if(socketRef.current && meetStateRef.current){
             const {meetId, currentUser} = meetStateRef.current
@@ -436,12 +458,12 @@ export const GlobalProvider = (props: {children: ReactNode}):ReactElement => {
 
     const InitSocket = async(meetType: FormType) => {
         
-        window.addEventListener("beforeunload", () => {
-            leaveMeeting();
-        });
-        window.addEventListener("popstate", () => {
-            leaveMeeting();
-        });
+        // window.addEventListener("beforeunload", () => {
+        //     leaveMeeting();
+        // });
+        // window.addEventListener("popstate", () => {
+        //     leaveMeeting();
+        // });
 
         if(meetStateRef.current && socketRef.current){
             
@@ -954,7 +976,9 @@ export const GlobalProvider = (props: {children: ReactNode}):ReactElement => {
             isRecording,
             displayStreamRef,
             chatMessages, 
-            sendMessage, 
+            sendMessage,
+            startRecording,
+            stopRecording,
             leaveMeeting,
             endMeeting,
             handleScreenShare, 
